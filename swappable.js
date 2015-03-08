@@ -4,27 +4,25 @@ chrome.runtime.onInstalled.addListener(function() {
   updateSwappableFolderId();
 });
 
-// chrome.runtime.onStartup.addListener(function(){
-//   alert("started!");
-//   updateSwappableFolderId();
-// });
-
 chrome.bookmarks.onCreated.addListener(function(id, newBookmark){
   if(newBookmark.parentId == '1') {
     addNewBookmarkToSwappableFolder(newBookmark);
   }
 });
 
-// document.addEventListener('DOMContentLoaded', function () {
-//   getActiveSwappableFolderId(function(activeFolderId){
-//     chrome.bookmarks.getTree(function(bookmarkNodes){
-//       displaySwappableFolders(bookmarkNodes, false, activeFolderId);
-//     });
-//   });
-//   $('body').on('click', '.bookmark-folder', function() {
-//     copyFromFolderToFolder($(this).attr('id'), "1");
-//   });
-// });
+document.addEventListener('DOMContentLoaded', function () {
+  console.log("dom content loaded");
+  chrome.bookmarks.getChildren('2', function(bookmarkNodes){
+    displaySwappableFolders(bookmarkNodes);
+  });
+  $('body').on('click', '.bookmark-folder', function() {
+    if(!$(this).hasClass("active")){
+      $(".active").removeClass("active");
+      copyFromFolderToFolder($(this).attr('id'), "1");
+      $(this).addClass("active");
+    }
+  });
+});
 
 function findOrCreateSwappableFolder() {
   alert("Checking for existence of swappable folder");
@@ -63,6 +61,7 @@ function containsNode(nodeList, node) {
       return true;
     }
   }
+  console.log("bookmark-bars contains " + node.title);
   return false;
 }
 
@@ -99,32 +98,23 @@ function copyFromFolderToFolder(fromBookmarkFolderId, toBookmarkFolderId) {
   });
 }
 
-function displaySwappableFolders(bookmarkNodes, parentIsSwappableFolder, activeFolderId) {
-  if(parentIsSwappableFolder) {
-    console.log("Parent is swappable");
-    bookmarkNodes.forEach(function(bookmark) {
-      var elementClass = "bookmark-folder"
-      if(bookmark.id == activeFolderId) {
-        elementClass += " active";
-      }
-      $('#bookmark-bars').append($("<button class='" + elementClass + "' id=" + bookmark.id + ">" + bookmark.title + "</button>"));
-    });
-  }
-  else if(bookmarkNodes) {
-    bookmarkNodes.forEach(function(bookmark) {
-      if(bookmark.title == "Swappable") {
-        displaySwappableFolders(bookmark.children, true, activeFolderId);
-      }
-      else {
-        displaySwappableFolders(bookmark.children, false, activeFolderId);
-      }
-    });
-  }
+function displaySwappableFolders(bookmarkNodes) {
+  bookmarkNodes.forEach(function(node){
+    if(node.title == "Swappable") {
+      chrome.bookmarks.getChildren(node.id, function(folders){
+        folders.forEach(function(folder){
+          $('#bookmark-bars').append($("<button class='bookmark-folder' id=" + folder.id + ">" + folder.title + "</button>"));
+        });
+      });
+      getActiveSwappableFolderId(function(id){
+        $("#" + id).addClass("active");
+      });
+    }
+  });
 }
 
 
 function getActiveSwappableFolderId(callback) {
-  // alert("updating swappable id");
   chrome.bookmarks.getChildren('1', function(bookmarksBarNodes) {
     chrome.bookmarks.getChildren('2', function(otherBookmarksNodes){
       otherBookmarksNodes.forEach(function(node){
@@ -141,12 +131,25 @@ function getActiveSwappableFolderId(callback) {
 }
 
 function checkIfFolderMatchesBookmarkBar(folder, bookmarksBarNodes, callback) {
+  console.log("Checking if folder " + folder.title + " mathces");
   chrome.bookmarks.getChildren(folder.id, function(nodes){
+    if(nodes.length != bookmarksBarNodes.length) {
+      console.log("lengths dont match");
+      return false;
+    }
     for(var i = 0; i < nodes.length; i++) {
       if(!containsNode(bookmarksBarNodes, nodes[i])) {
-        return;
+        console.log("folder bookmarks dont match bookmark bar. node title is " + nodes[i].title);
+        return false;
       }
     }
+    for(var i = 0; i < bookmarksBarNodes.length; i++) {
+      if(!containsNode(nodes, bookmarksBarNodes[i])) {
+        console.log("bookmakr bar bookmarks dont match folder");
+        return false;
+      }
+    }
+    activeFolderId = folder.id;
     callback(folder.id);
   });
 }
