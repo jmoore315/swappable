@@ -1,7 +1,8 @@
 chrome.runtime.onInstalled.addListener(function() {
-  alert("Swappy has been installed! A Swappy folder in 'Other bookmarks' will be created" + 
-    " if it does not already exist, along with a backup of your current Bookmark Bar bookmarks. " +
-    "You can create Swappable bookmark folders in the 'Swappable' folder. Happy Swapping!");
+  // alert("Swappy has been installed! A Swappy folder in 'Other bookmarks' will be created" + 
+  //   " if it does not already exist, along with a backup of your current Bookmark Bar bookmarks. " +
+  //   "You can create Swappable bookmark folders in the 'Swappable' folder. Happy Swapping!");
+  chrome.tabs.create({url: 'installed.html'});
   findOrCreateSwappableFolder();
   updateSwappableFolderId();
 });
@@ -47,18 +48,19 @@ document.addEventListener('DOMContentLoaded', function () {
       $(this).addClass("active");
     }
   });
+  $('#help-link').on('click', function() {
+    chrome.tabs.create({url: 'installed.html'});
+  });
 });
 
 function findOrCreateSwappableFolder() {
-  alert("Checking for existence of swappable folder");
   chrome.bookmarks.getChildren('2', function(nodes){
     for(var i=0; i<nodes.length; i++) {
       if (nodes[i].title == 'Swappable' && isFolder(nodes[i])) {
-        alert("Swappable folder found.");
         return;
       }
     }
-    alert("Swappable folder not found. Creating it.");
+    // alert("Swappable folder not found. Creating it.");
     createSwappableFolder();
   });
 }
