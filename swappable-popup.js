@@ -1,17 +1,16 @@
-var activeFolderId;
+var activeFolderId = '0';
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log("dom content loaded");
-  getActiveSwappableFolderId(function(activeFolderId){
-    console.log("got active id");
-    chrome.bookmarks.getTree(function(bookmarkNodes){
-      displaySwappableFolders(bookmarkNodes, false, activeFolderId);
-    });
+  chrome.bookmarks.getChildren('2', function(bookmarkNodes){
+    displaySwappableFolders(bookmarkNodes);
   });
   $('body').on('click', '.bookmark-folder', function() {
-    $(".active").removeClass("active");
-    copyFromFolderToFolder($(this).attr('id'), "1");
-    $(this).addClass("active");
+    if(!$(this).hasClass("active")){
+      $(".active").removeClass("active");
+      copyFromFolderToFolder($(this).attr('id'), "1");
+      $(this).addClass("active");
+    }
   });
 });
 
@@ -111,6 +110,21 @@ function displaySwappableFolders(bookmarkNodes, parentIsSwappableFolder, activeF
       }
     });
   }
+}
+
+function displaySwappableFolders(bookmarkNodes) {
+  bookmarkNodes.forEach(function(node){
+    if(node.title == "Swappable") {
+      chrome.bookmarks.getChildren(node.id, function(folders){
+        folders.forEach(function(folder){
+          $('#bookmark-bars').append($("<button class='bookmark-folder' id=" + folder.id + ">" + folder.title + "</button>"));
+        });
+      });
+      getActiveSwappableFolderId(function(id){
+        $("#" + id).addClass("active");
+      });
+    }
+  });
 }
 
 
