@@ -1,7 +1,7 @@
 {
   "name": "Swappable",
-  "version": "1.1",
-  "description": "A browser action with a popup dump of all bookmarks, including search, add, edit and delete.",
+  "version": "1.0",
+  "description": "A bookmark bar swapper, allowing you to switch between multiple bookmark bars such as 'Work' and 'Personal'",
   "permissions": [
     "bookmarks"
   ],
